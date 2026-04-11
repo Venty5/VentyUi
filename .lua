@@ -1,4 +1,4 @@
---V2
+--V3
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -6,8 +6,6 @@ local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-
-local LOCK_KEY = "VentyLibrary_Active"
 
 for _, gui in pairs(game:GetService("CoreGui"):GetChildren()) do
     if gui:IsA("ScreenGui") and gui:FindFirstChild("__VentyLock") then
@@ -37,8 +35,9 @@ local Library = {
     Font = Enum.Font.Gotham
 }
 
+local SIDEBAR_WIDTH = 140
 local TAB_HEIGHT = 36
-local TAB_PADDING = 14
+local TAB_PADDING = 10
 
 local Container = Instance.new("ScreenGui")
 Container.Name = string.char(math.random(65, 90))..tostring(math.random(100, 999))
@@ -356,79 +355,53 @@ function Library:Init()
     end
 end
 
-local function ShowLoadingScreen(duration, callback)
+-- Schlichtes Intro: Titeltext + Fortschrittsbalken, mittig auf dem Bildschirm
+local function ShowIntro(windowName, introIcon, duration, callback)
     local Overlay = Create("Frame", {
         Parent = Container,
         Size = UDim2.new(1,0,1,0),
         BackgroundColor3 = Color3.fromRGB(0,0,0),
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0.55,
         ZIndex = 100,
         BorderSizePixel = 0
     })
 
-    local LoadWindow = Create("Frame", {
-        Parent = Container,
+    -- Kleines Icon über dem Namen (optional)
+    local IntroIcon = Create("ImageLabel", {
+        Parent = Overlay,
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 300, 0, 130),
-        BackgroundColor3 = Color3.fromRGB(10, 10, 13),
-        BorderSizePixel = 0,
-        ZIndex = 101,
-        BackgroundTransparency = 1
-    }, {
-        Create("UICorner", {CornerRadius = UDim.new(0, 12)}),
-        Create("UIStroke", {Color = Color3.fromRGB(35, 35, 42), Thickness = 1.2})
-    })
-
-    local LogoImg = Create("ImageLabel", {
-        Parent = LoadWindow,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 18),
-        Size = UDim2.new(0, 24, 0, 24),
+        Position = UDim2.new(0.5, 0, 0.5, -38),
+        Size = UDim2.new(0, 28, 0, 28),
         BackgroundTransparency = 1,
-        Image = "rbxassetid://125829575723612",
+        Image = introIcon or "",
         ImageTransparency = 1,
-        ZIndex = 102
+        ZIndex = 101
     })
 
-    local LoadTitle = Create("TextLabel", {
-        Parent = LoadWindow,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 48),
-        Size = UDim2.new(1, -20, 0, 18),
+    local IntroTitle = Create("TextLabel", {
+        Parent = Overlay,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, -6),
+        Size = UDim2.new(0, 320, 0, 22),
         BackgroundTransparency = 1,
-        Text = "Venty",
+        Text = windowName or "Venty",
         TextColor3 = Color3.fromRGB(230, 230, 235),
-        TextSize = 17,
+        TextSize = 19,
         Font = Enum.Font.GothamBlack,
         TextXAlignment = Enum.TextXAlignment.Center,
         TextTransparency = 1,
-        ZIndex = 102
+        ZIndex = 101
     })
 
-    local LoadSub = Create("TextLabel", {
-        Parent = LoadWindow,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 70),
-        Size = UDim2.new(1, -20, 0, 13),
-        BackgroundTransparency = 1,
-        Text = "Initializing...",
-        TextColor3 = Color3.fromRGB(100, 100, 115),
-        TextSize = 12,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        TextTransparency = 1,
-        ZIndex = 102
-    })
-
+    -- Balken-Hintergrund
     local BarBg = Create("Frame", {
-        Parent = LoadWindow,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 90),
-        Size = UDim2.new(1, -40, 0, 3),
-        BackgroundColor3 = Color3.fromRGB(25, 25, 32),
+        Parent = Overlay,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 22),
+        Size = UDim2.new(0, 220, 0, 3),
+        BackgroundColor3 = Color3.fromRGB(35, 35, 42),
         BorderSizePixel = 0,
-        ZIndex = 102
+        ZIndex = 101
     }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
 
     local BarFill = Create("Frame", {
@@ -436,64 +409,33 @@ local function ShowLoadingScreen(duration, callback)
         Size = UDim2.new(0, 0, 1, 0),
         BackgroundColor3 = Color3.fromRGB(60, 120, 255),
         BorderSizePixel = 0,
-        ZIndex = 103
+        ZIndex = 102
     }, {Create("UICorner", {CornerRadius = UDim.new(1, 0)})})
 
-    local PercLabel = Create("TextLabel", {
-        Parent = LoadWindow,
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, 100),
-        Size = UDim2.new(1, -40, 0, 13),
-        BackgroundTransparency = 1,
-        Text = "0%",
-        TextColor3 = Color3.fromRGB(70, 70, 88),
-        TextSize = 10,
-        Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        TextTransparency = 1,
-        ZIndex = 102
-    })
+    -- Einblenden
+    TweenService:Create(IntroIcon,  TweenInfo.new(0.35, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
+    task.wait(0.2)
 
-    TweenService:Create(LoadWindow, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {BackgroundTransparency = 0}):Play()
-    task.wait(0.1)
-    TweenService:Create(LogoImg,   TweenInfo.new(0.3, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
-    TweenService:Create(LoadTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
-    task.wait(0.15)
-    TweenService:Create(LoadSub,   TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
-    TweenService:Create(PercLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
-    task.wait(0.1)
-
-    local steps = {"Checking environment...", "Loading modules...", "Applying settings...", "Ready!"}
-    local stepDur = duration / #steps
-
-    for i, stepText in ipairs(steps) do
-        LoadSub.Text = stepText
-        local targetScale = i / #steps
-        TweenService:Create(BarFill, TweenInfo.new(stepDur * 0.9, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-            Size = UDim2.new(targetScale, 0, 1, 0)
+    -- Balken füllen über LoadDuration
+    local steps = 4
+    local stepDur = duration / steps
+    for i = 1, steps do
+        TweenService:Create(BarFill, TweenInfo.new(stepDur * 0.92, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = UDim2.new(i / steps, 0, 1, 0)
         }):Play()
-        local startPct = math.floor((i-1)/#steps * 100)
-        local endPct   = math.floor(i/#steps * 100)
-        local t0 = tick()
-        while tick() - t0 < stepDur do
-            local progress = math.clamp((tick()-t0)/stepDur, 0, 1)
-            PercLabel.Text = math.floor(startPct + (endPct-startPct)*progress).."%"
-            task.wait()
-        end
-        PercLabel.Text = endPct.."%"
+        task.wait(stepDur)
     end
 
-    task.wait(0.12)
-    TweenService:Create(LoadWindow, TweenInfo.new(0.45, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(LogoImg,   TweenInfo.new(0.3, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
-    TweenService:Create(LoadTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
-    TweenService:Create(LoadSub,   TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
-    TweenService:Create(PercLabel, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
-    TweenService:Create(BarBg,     TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(BarFill,   TweenInfo.new(0.25, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
-    TweenService:Create(Overlay,   TweenInfo.new(0.45, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
+    task.wait(0.1)
+
+    -- Ausblenden
+    TweenService:Create(IntroIcon,  TweenInfo.new(0.3, Enum.EasingStyle.Quint), {ImageTransparency = 1}):Play()
+    TweenService:Create(IntroTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {TextTransparency = 1}):Play()
+    TweenService:Create(BarBg,      TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarFill,    TweenInfo.new(0.3, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(Overlay,    TweenInfo.new(0.45, Enum.EasingStyle.Quint), {BackgroundTransparency = 1}):Play()
     task.wait(0.5)
-    LoadWindow:Destroy()
     Overlay:Destroy()
     if callback then callback() end
 end
@@ -502,6 +444,8 @@ function Library:MakeWindow(WindowConfig)
     local FirstTab = true
     local Minimized = false
     local UIHidden = false
+    local SearchOpen = false
+    local AllElements = {}
 
     WindowConfig = WindowConfig or {}
     WindowConfig.Name           = WindowConfig.Name           or "Venty"
@@ -529,13 +473,13 @@ function Library:MakeWindow(WindowConfig)
         Position = UDim2.new(0,0,1,-1)
     }), "Stroke")
 
-local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 16), {
-    Size = UDim2.new(1,0,1,0),
-    Position = UDim2.new(0,0,0,0),
-    Font = Enum.Font.GothamBlack,
-    TextSize = 16,
-    TextXAlignment = Enum.TextXAlignment.Center
-}), "Text")
+    local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 16), {
+        Size = UDim2.new(1,0,1,0),
+        Position = UDim2.new(0,0,0,0),
+        Font = Enum.Font.GothamBlack,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Center
+    }), "Text")
 
     local BannerIconLabel = nil
     if WindowConfig.BannerIcon then
@@ -549,7 +493,7 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
 
     local CloseBtn = SetChildren(SetProps(MakeElement("Button"), {
         Size = UDim2.new(0,32,1,0),
-        Position = UDim2.new(0,76,0,0),
+        Position = UDim2.new(0,112,0,0),
         BackgroundTransparency = 1
     }), {
         AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072725342"), {
@@ -561,7 +505,7 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
 
     local MinimizeBtn = SetChildren(SetProps(MakeElement("Button"), {
         Size = UDim2.new(0,32,1,0),
-        Position = UDim2.new(0,38,0,0),
+        Position = UDim2.new(0,74,0,0),
         BackgroundTransparency = 1
     }), {
         AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
@@ -574,7 +518,7 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
 
     local ResizeBtn = SetChildren(SetProps(MakeElement("Button"), {
         Size = UDim2.new(0,32,1,0),
-        Position = UDim2.new(0,0,0,0),
+        Position = UDim2.new(0,36,0,0),
         BackgroundTransparency = 1
     }), {
         AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://117273761878755"), {
@@ -584,14 +528,29 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         }), "Text")
     })
 
+    local SearchBtn = SetChildren(SetProps(MakeElement("Button"), {
+        Size = UDim2.new(0,32,1,0),
+        Position = UDim2.new(0,0,0,0),
+        BackgroundTransparency = 1
+    }), {
+        AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://6031068426"), {
+            AnchorPoint = Vector2.new(0.5,0.5),
+            Position = UDim2.new(0.5,0,0.5,0),
+            Size = UDim2.new(0,16,0,16),
+            Name = "Ico"
+        }), "Text")
+    })
+
     local ButtonContainer = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255,255,255),0,6), {
-        Size = UDim2.new(0,108,0,26),
+        Size = UDim2.new(0,144,0,26),
         Position = UDim2.new(1,-8,0.5,0),
         AnchorPoint = Vector2.new(1,0.5)
     }), {
         AddThemeObject(MakeElement("Stroke"), "Stroke"),
         AddThemeObject(SetProps(MakeElement("Frame"), {Size=UDim2.new(0,1,1,0),Position=UDim2.new(0,36,0,0)}), "Stroke"),
         AddThemeObject(SetProps(MakeElement("Frame"), {Size=UDim2.new(0,1,1,0),Position=UDim2.new(0,72,0,0)}), "Stroke"),
+        AddThemeObject(SetProps(MakeElement("Frame"), {Size=UDim2.new(0,1,1,0),Position=UDim2.new(0,108,0,0)}), "Stroke"),
+        SearchBtn,
         ResizeBtn,
         MinimizeBtn,
         CloseBtn
@@ -601,39 +560,92 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         Size = UDim2.new(1,0,0,46)
     })
 
+    local SearchOverlay = SetProps(MakeElement("TFrame"), {
+        Size = UDim2.new(1,-(SIDEBAR_WIDTH+1),1,-46),
+        Position = UDim2.new(0,SIDEBAR_WIDTH+1,0,46),
+        Visible = false,
+        ZIndex = 10
+    })
+
+    local SearchBg = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255,255,255),0,0), {
+        Size = UDim2.new(1,0,1,0),
+        BackgroundTransparency = 0.01
+    }), {
+        MakeElement("Padding", 10,10,10,10)
+    }), "Second")
+
+    local SearchBarBg = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255,255,255),0,6), {
+        Size = UDim2.new(1,0,0,32),
+        BackgroundTransparency = 0.02
+    }), {
+        AddThemeObject(MakeElement("Stroke"), "Stroke")
+    }), "Main")
+
+    local SearchInput = Create("TextBox", {
+        Size = UDim2.new(1,-36,1,0),
+        Position = UDim2.new(0,34,0,0),
+        BackgroundTransparency = 1,
+        PlaceholderText = "Search functions...",
+        PlaceholderColor3 = Color3.fromRGB(100,100,110),
+        TextColor3 = Color3.fromRGB(230,230,235),
+        TextSize = 13,
+        Font = Enum.Font.Gotham,
+        ClearTextOnFocus = false,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = SearchBarBg
+    })
+
+    local SearchIcon = SetProps(MakeElement("Image", "rbxassetid://71637661279268"), {
+        Size = UDim2.new(0,14,0,14),
+        Position = UDim2.new(0,10,0.5,0),
+        AnchorPoint = Vector2.new(0,0.5),
+        ImageColor3 = Color3.fromRGB(100,100,110),
+        Parent = SearchBarBg
+    })
+
+    SearchBarBg.Parent = SearchBg
+
+    local SearchResults = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255,255,255), 4), {
+        Size = UDim2.new(1,0,1,-42),
+        Position = UDim2.new(0,0,0,42),
+        Parent = SearchBg
+    }), {
+        MakeElement("List", 0, 5),
+        MakeElement("Padding", 5,0,4,5)
+    }), "Divider")
+
+    AddConnection(SearchResults.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        SearchResults.CanvasSize = UDim2.new(0,0,0, SearchResults.UIListLayout.AbsoluteContentSize.Y + 10)
+    end)
+
+    SearchBg.Parent = SearchOverlay
+
     local TabBar = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255,255,255), 0), {
-        Size = UDim2.new(1,0,0,TAB_HEIGHT),
+        Size = UDim2.new(0,SIDEBAR_WIDTH,1,-46),
         Position = UDim2.new(0,0,0,46),
         ScrollBarThickness = 0,
-        ScrollingDirection = Enum.ScrollingDirection.X,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
         CanvasSize = UDim2.new(0,0,0,0),
         ElasticBehavior = Enum.ElasticBehavior.Never
     }), {
-        SetProps(Create("UIListLayout", {
-            FillDirection = Enum.FillDirection.Horizontal,
+        Create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Vertical,
             SortOrder = Enum.SortOrder.LayoutOrder,
             Padding = UDim.new(0,0),
             HorizontalAlignment = Enum.HorizontalAlignment.Left,
-            VerticalAlignment = Enum.VerticalAlignment.Center
-        }), {}),
-        MakeElement("Padding", 0, 8, 8, 0)
+            VerticalAlignment = Enum.VerticalAlignment.Top
+        }),
+        MakeElement("Padding", 6, 6, 6, 6)
     }), "Second")
 
-    TabBar.InputChanged:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseWheel then
-            local newPos = TabBar.CanvasPosition.X - (Input.Position.Z * 40)
-            TabBar.CanvasPosition = Vector2.new(math.max(0, newPos), 0)
-        end
-    end)
-
     local TabBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
-        Size = UDim2.new(1,0,0,1),
-        Position = UDim2.new(0,0,0,46+TAB_HEIGHT)
+        Size = UDim2.new(0,1,1,-46),
+        Position = UDim2.new(0,SIDEBAR_WIDTH,0,46)
     }), "Stroke")
 
     local ContentArea = AddThemeObject(SetProps(MakeElement("TFrame"), {
-        Size = UDim2.new(1,0,1,-(46+TAB_HEIGHT+1)),
-        Position = UDim2.new(0,0,0,46+TAB_HEIGHT+1)
+        Size = UDim2.new(1,-(SIDEBAR_WIDTH+1),1,-46),
+        Position = UDim2.new(0,SIDEBAR_WIDTH+1,0,46)
     }), "Main")
 
     local TopBarChildren = {
@@ -641,7 +653,6 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         WindowTopBarLine,
         ButtonContainer,
     }
-
     if BannerIconLabel then
         table.insert(TopBarChildren, BannerIconLabel)
     end
@@ -662,7 +673,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         DragPoint,
         TabBar,
         TabBarLine,
-        ContentArea
+        ContentArea,
+        SearchOverlay
     }), "Main")
 
     local SetResizingCallback = MakeDraggable(DragPoint, MainWindow)
@@ -679,6 +691,83 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         }), "Text"),
         MakeElement("Corner", 1)
     })
+
+    local function DoSearch(query)
+        for _, child in pairs(SearchResults:GetChildren()) do
+            if child:IsA("Frame") or child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+        if query == "" then return end
+        query = query:lower()
+        local found = 0
+        for _, entry in ipairs(AllElements) do
+            if entry.Label:lower():find(query, 1, true) then
+                found = found + 1
+                local ResultBtn = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255,255,255),0,5), {
+                    Size = UDim2.new(1,0,0,34),
+                    Parent = SearchResults,
+                    BackgroundTransparency = 0.02
+                }), {
+                    AddThemeObject(SetProps(MakeElement("Label", entry.Label, 13), {
+                        Size = UDim2.new(1,-80,1,0),
+                        Position = UDim2.new(0,12,0,0),
+                        Font = Enum.Font.FredokaOne,
+                        Name = "Lbl"
+                    }), "Text"),
+                    AddThemeObject(SetProps(MakeElement("Label", entry.Tab, 11), {
+                        Size = UDim2.new(0,72,1,0),
+                        Position = UDim2.new(1,-80,0,0),
+                        Font = Enum.Font.Gotham,
+                        TextXAlignment = Enum.TextXAlignment.Right,
+                        TextTransparency = 0.45,
+                        Name = "TabLbl"
+                    }), "TextDark"),
+                    AddThemeObject(MakeElement("Stroke"), "Stroke")
+                }), "Second")
+                local clickBtn = SetProps(MakeElement("Button"), {Size=UDim2.new(1,0,1,0), Parent=ResultBtn})
+                AddConnection(clickBtn.MouseButton1Up, function()
+                    if entry.Activate then entry.Activate() end
+                end)
+                AddConnection(clickBtn.MouseEnter, function()
+                    TweenService:Create(ResultBtn,TweenInfo.new(0.15,Enum.EasingStyle.Quint),{BackgroundColor3=Color3.fromRGB(22,22,26)}):Play()
+                end)
+                AddConnection(clickBtn.MouseLeave, function()
+                    TweenService:Create(ResultBtn,TweenInfo.new(0.15,Enum.EasingStyle.Quint),{BackgroundColor3=Library.Themes[Library.SelectedTheme].Second}):Play()
+                end)
+            end
+        end
+        if found == 0 then
+            local NoResult = AddThemeObject(SetProps(MakeElement("Label", "No results for \""..query.."\"", 13), {
+                Size = UDim2.new(1,0,0,30),
+                Font = Enum.Font.FredokaOne,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                TextTransparency = 0.5,
+                Parent = SearchResults
+            }), "TextDark")
+        end
+    end
+
+    AddConnection(SearchInput:GetPropertyChangedSignal("Text"), function()
+        DoSearch(SearchInput.Text)
+    end)
+
+    local function ToggleSearch(state)
+        SearchOpen = state
+        SearchOverlay.Visible = SearchOpen
+        if SearchOpen then
+            SearchInput.Text = ""
+            DoSearch("")
+            task.defer(function() SearchInput:CaptureFocus() end)
+            TweenService:Create(SearchBtn.Ico, TweenInfo.new(0.2,Enum.EasingStyle.Quint), {ImageColor3=Color3.fromRGB(60,120,255)}):Play()
+        else
+            TweenService:Create(SearchBtn.Ico, TweenInfo.new(0.2,Enum.EasingStyle.Quint), {ImageColor3=Library.Themes[Library.SelectedTheme].Text}):Play()
+        end
+    end
+
+    AddConnection(SearchBtn.MouseButton1Up, function()
+        ToggleSearch(not SearchOpen)
+    end)
 
     AddConnection(CloseBtn.MouseButton1Up, function()
         MainWindow.Visible = false
@@ -721,30 +810,58 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
         Minimized = not Minimized
     end)
 
-    ShowLoadingScreen(WindowConfig.LoadDuration, function()
+    -- Intro anzeigen (nur wenn IntroEnabled)
+    if WindowConfig.IntroEnabled then
+        ShowIntro(
+            WindowConfig.Name,
+            WindowConfig.IntroToggleIcon,
+            WindowConfig.LoadDuration,
+            function()
+                MainWindow.Visible = true
+            end
+        )
+    else
         MainWindow.Visible = true
-    end)
+    end
 
     local TabFunction = {}
+    local CreatedCategories = {}
 
     function TabFunction:MakeTab(TabConfig)
         TabConfig = TabConfig or {}
         TabConfig.Name        = TabConfig.Name        or "Tab"
         TabConfig.Icon        = TabConfig.Icon        or ""
         TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
+        TabConfig.Category    = TabConfig.Category    or nil
+
+        if TabConfig.Category and not CreatedCategories[TabConfig.Category] then
+            CreatedCategories[TabConfig.Category] = true
+            local CatLabel = AddThemeObject(SetProps(MakeElement("Label", TabConfig.Category:upper(), 10), {
+                Size = UDim2.new(1,0,0,22),
+                Font = Enum.Font.GothamBold,
+                TextTransparency = 0.45,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                BackgroundTransparency = 1,
+                Name = "Cat_"..TabConfig.Category,
+                Parent = TabBar
+            }), "TextDark")
+            local pad = Instance.new("UIPadding", CatLabel)
+            pad.PaddingLeft = UDim.new(0, 4)
+            pad.PaddingTop = UDim.new(0, 4)
+        end
 
         local TabBtn = AddThemeObject(SetChildren(SetProps(MakeElement("Button"), {
-            Size = UDim2.new(0,100,1,0),
-            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(1,0,0,TAB_HEIGHT),
             Parent = TabBar,
             BackgroundTransparency = 1,
-            ClipsDescendants = false
+            ClipsDescendants = false,
+            Name = "TabBtn_"..TabConfig.Name
         }), {
             Create("Frame", {
                 Name = "ActiveBar",
-                Size = UDim2.new(1,-16,0,2),
-                Position = UDim2.new(0,8,1,-2),
-                AnchorPoint = Vector2.new(0,0),
+                Size = UDim2.new(0,2,0,16),
+                Position = UDim2.new(0,0,0.5,0),
+                AnchorPoint = Vector2.new(0,0.5),
                 BackgroundColor3 = Color3.fromRGB(60,120,255),
                 BorderSizePixel = 0,
                 BackgroundTransparency = 1
@@ -752,31 +869,29 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
             AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
                 AnchorPoint = Vector2.new(0,0.5),
                 Size = UDim2.new(0,15,0,15),
-                Position = UDim2.new(0,TAB_PADDING,0.5,0),
+                Position = UDim2.new(0, TAB_PADDING + 6, 0.5, 0),
                 ImageTransparency = 0.55,
                 Name = "Ico"
             }), "Text"),
             AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 13), {
                 AnchorPoint = Vector2.new(0,0.5),
-                Size = UDim2.new(0,0,0,14),
-                AutomaticSize = Enum.AutomaticSize.X,
-                Position = UDim2.new(0, TAB_PADDING + (TabConfig.Icon ~= "" and 20 or 0), 0.5, 0),
+                Size = UDim2.new(1, -(TAB_PADDING*2 + (TabConfig.Icon ~= "" and 22 or 4)), 0, 14),
+                Position = UDim2.new(0, TAB_PADDING + 6 + (TabConfig.Icon ~= "" and 20 or 0), 0.5, 0),
                 Font = Enum.Font.GothamSemibold,
                 Name = "TabName",
                 TextTransparency = 0.5
             }), "Text"),
-            Create("UIPadding", {
-                PaddingRight = UDim.new(0, TAB_PADDING)
-            })
+            Create("UICorner", {CornerRadius = UDim.new(0,5)})
         }), "Second")
 
         task.defer(function()
             local layout = TabBar:FindFirstChildOfClass("UIListLayout")
             if layout then
-                TabBar.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X + 16, 0, 0)
-                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    TabBar.CanvasSize = UDim2.new(0, layout.AbsoluteContentSize.X + 16, 0, 0)
-                end)
+                local function update()
+                    TabBar.CanvasSize = UDim2.new(0,0,0, layout.AbsoluteContentSize.Y + 12)
+                end
+                update()
+                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(update)
             end
         end)
 
@@ -808,33 +923,21 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
             for _, tb in next, TabBar:GetChildren() do
                 if tb:IsA("TextButton") then
                     pcall(function()
-                        TweenService:Create(tb.Ico,     TweenInfo.new(0.22,Enum.EasingStyle.Quint), {ImageTransparency=0.55, ImageColor3=Library.Themes[Library.SelectedTheme].Text}):Play()
-                        TweenService:Create(tb.TabName, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {TextTransparency=0.5}):Play()
-                        TweenService:Create(tb.ActiveBar, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=1}):Play()
-                        TweenService:Create(tb, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=1}):Play()
+                        TweenService:Create(tb.Ico,      TweenInfo.new(0.22,Enum.EasingStyle.Quint), {ImageTransparency=0.55, ImageColor3=Library.Themes[Library.SelectedTheme].Text}):Play()
+                        TweenService:Create(tb.TabName,  TweenInfo.new(0.22,Enum.EasingStyle.Quint), {TextTransparency=0.5}):Play()
+                        TweenService:Create(tb.ActiveBar,TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=1}):Play()
+                        TweenService:Create(tb,          TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=1}):Play()
                     end)
                 end
             end
             for _, Cont in next, ContentArea:GetChildren() do
                 if Cont.Name == "ItemContainer" then Cont.Visible = false end
             end
-            TweenService:Create(TabBtn.Ico,     TweenInfo.new(0.22,Enum.EasingStyle.Quint), {ImageTransparency=0.05, ImageColor3=Color3.fromRGB(255,255,255)}):Play()
-            TweenService:Create(TabBtn.TabName, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {TextTransparency=0}):Play()
-            TweenService:Create(TabBtn.ActiveBar, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=0}):Play()
-            TweenService:Create(TabBtn, TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=0.88}):Play()
+            TweenService:Create(TabBtn.Ico,      TweenInfo.new(0.22,Enum.EasingStyle.Quint), {ImageTransparency=0.05, ImageColor3=Color3.fromRGB(255,255,255)}):Play()
+            TweenService:Create(TabBtn.TabName,  TweenInfo.new(0.22,Enum.EasingStyle.Quint), {TextTransparency=0}):Play()
+            TweenService:Create(TabBtn.ActiveBar,TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=0}):Play()
+            TweenService:Create(TabBtn,          TweenInfo.new(0.22,Enum.EasingStyle.Quint), {BackgroundTransparency=0.88}):Play()
             ItemContainer.Visible = true
-
-            task.defer(function()
-                local tabPos = TabBtn.AbsolutePosition.X - TabBar.AbsolutePosition.X
-                local tabEnd = tabPos + TabBtn.AbsoluteSize.X
-                local barWidth = TabBar.AbsoluteSize.X
-                local canvas = TabBar.CanvasPosition.X
-                if tabPos < canvas then
-                    TabBar.CanvasPosition = Vector2.new(math.max(0, tabPos - 8), 0)
-                elseif tabEnd > canvas + barWidth then
-                    TabBar.CanvasPosition = Vector2.new(tabEnd - barWidth + 8, 0)
-                end
-            end)
         end
 
         if FirstTab then
@@ -846,7 +949,6 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
             ClickSound:Play()
             ActivateTab()
         end)
-
         AddConnection(TabBtn.MouseEnter, function()
             if ItemContainer.Visible then return end
             TweenService:Create(TabBtn, TweenInfo.new(0.18,Enum.EasingStyle.Quint), {BackgroundTransparency=0.94}):Play()
@@ -866,6 +968,7 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     AddThemeObject(SetProps(MakeElement("Label",Text,15), {Size=UDim2.new(1,-12,1,0), Position=UDim2.new(0,12,0,0), Font=Enum.Font.FredokaOne, Name="Content"}), "Text"),
                     AddThemeObject(MakeElement("Stroke"), "Stroke")
                 }), "Second")
+                table.insert(AllElements, {Label=Text, Tab=TabConfig.Name, Activate=nil})
                 local LabelFunction = {}
                 function LabelFunction:Set(ToChange) LabelFrame.Content.Text = ToChange end
                 return LabelFunction
@@ -918,6 +1021,12 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     AddThemeObject(MakeElement("Stroke"), "Stroke"),
                     Click
                 }), "Second")
+
+                table.insert(AllElements, {
+                    Label = ButtonConfig.Name,
+                    Tab = TabConfig.Name,
+                    Activate = function() spawn(function() ButtonConfig.Callback() end) end
+                })
 
                 AddConnection(Click.MouseEnter, function()
                     TweenService:Create(ButtonFrame, TweenInfo.new(0.2,Enum.EasingStyle.Quint), {BackgroundColor3=Color3.fromRGB(22,22,26)}):Play()
@@ -972,28 +1081,34 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     ToggleTrack, Click
                 }), "Second")
 
+                table.insert(AllElements, {
+                    Label = ToggleConfig.Name,
+                    Tab = TabConfig.Name,
+                    Activate = function() Toggle:Set(not Toggle.Value); SaveCfg(game.GameId) end
+                })
+
                 function Toggle:Set(Value)
                     Toggle.Value = Value
                     if Toggle.Value then
-                        TweenService:Create(ToggleTrack,       TweenInfo.new(0.25,Enum.EasingStyle.Quint), {BackgroundColor3=ToggleConfig.Color}):Play()
-                        TweenService:Create(ToggleTrack.Stroke,TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Color=ToggleConfig.Color, Transparency=0.6}):Play()
-                        TweenService:Create(ToggleThumb,       TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Position=UDim2.new(0,19,0.5,0), BackgroundColor3=Color3.fromRGB(255,255,255)}):Play()
+                        TweenService:Create(ToggleTrack,        TweenInfo.new(0.25,Enum.EasingStyle.Quint), {BackgroundColor3=ToggleConfig.Color}):Play()
+                        TweenService:Create(ToggleTrack.Stroke, TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Color=ToggleConfig.Color, Transparency=0.6}):Play()
+                        TweenService:Create(ToggleThumb,        TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Position=UDim2.new(0,19,0.5,0), BackgroundColor3=Color3.fromRGB(255,255,255)}):Play()
                     else
-                        TweenService:Create(ToggleTrack,       TweenInfo.new(0.25,Enum.EasingStyle.Quint), {BackgroundColor3=Color3.fromRGB(18,18,22)}):Play()
-                        TweenService:Create(ToggleTrack.Stroke,TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Color=Color3.fromRGB(40,40,50), Transparency=0}):Play()
-                        TweenService:Create(ToggleThumb,       TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Position=UDim2.new(0,3,0.5,0), BackgroundColor3=Color3.fromRGB(120,120,130)}):Play()
+                        TweenService:Create(ToggleTrack,        TweenInfo.new(0.25,Enum.EasingStyle.Quint), {BackgroundColor3=Color3.fromRGB(18,18,22)}):Play()
+                        TweenService:Create(ToggleTrack.Stroke, TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Color=Color3.fromRGB(40,40,50), Transparency=0}):Play()
+                        TweenService:Create(ToggleThumb,        TweenInfo.new(0.25,Enum.EasingStyle.Quint), {Position=UDim2.new(0,3,0.5,0), BackgroundColor3=Color3.fromRGB(120,120,130)}):Play()
                     end
                     ToggleConfig.Callback(Toggle.Value)
                 end
                 Toggle:Set(Toggle.Value)
 
-                AddConnection(Click.MouseEnter,    function() TweenService:Create(ToggleFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quint),{BackgroundColor3=Color3.fromRGB(22,22,26)}):Play() end)
-                AddConnection(Click.MouseLeave,    function() TweenService:Create(ToggleFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quint),{BackgroundColor3=Library.Themes[Library.SelectedTheme].Second}):Play() end)
-                AddConnection(Click.MouseButton1Up,function()
+                AddConnection(Click.MouseEnter,     function() TweenService:Create(ToggleFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quint),{BackgroundColor3=Color3.fromRGB(22,22,26)}):Play() end)
+                AddConnection(Click.MouseLeave,     function() TweenService:Create(ToggleFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quint),{BackgroundColor3=Library.Themes[Library.SelectedTheme].Second}):Play() end)
+                AddConnection(Click.MouseButton1Up, function()
                     TweenService:Create(ToggleFrame,TweenInfo.new(0.2,Enum.EasingStyle.Quint),{BackgroundColor3=Color3.fromRGB(22,22,26)}):Play()
                     SaveCfg(game.GameId); Toggle:Set(not Toggle.Value)
                 end)
-                AddConnection(Click.MouseButton1Down,function()
+                AddConnection(Click.MouseButton1Down, function()
                     TweenService:Create(ToggleThumb,TweenInfo.new(0.1,Enum.EasingStyle.Quad),{Size=UDim2.new(0,17,0,14)}):Play()
                 end)
                 if ToggleConfig.Flag then Library.Flags[ToggleConfig.Flag] = Toggle end
@@ -1029,6 +1144,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     AddThemeObject(SetProps(MakeElement("Label",SliderConfig.Name,15), {Size=UDim2.new(1,-100,0,14), Position=UDim2.new(0,12,0,10), Font=Enum.Font.FredokaOne, Name="Content"}), "Text"),
                     SliderValueLabel, AddThemeObject(MakeElement("Stroke"),"Stroke"), SliderBar
                 }), "Second")
+
+                table.insert(AllElements, {Label = SliderConfig.Name, Tab = TabConfig.Name, Activate = nil})
 
                 SliderBar.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then Dragging=true end end)
                 SliderBar.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then Dragging=false end end)
@@ -1080,6 +1197,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     }),{Size=UDim2.new(1,0,0,38),ClipsDescendants=true,Name="F"}),
                     AddThemeObject(MakeElement("Stroke"),"Stroke"), MakeElement("Corner")
                 }), "Second")
+
+                table.insert(AllElements, {Label = DropdownConfig.Name, Tab = TabConfig.Name, Activate = nil})
 
                 AddConnection(DropdownList:GetPropertyChangedSignal("AbsoluteContentSize"),function()
                     DropdownContainer.CanvasSize=UDim2.new(0,0,0,DropdownList.AbsoluteContentSize.Y)
@@ -1152,6 +1271,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     AddThemeObject(MakeElement("Stroke"),"Stroke"), BindBox, Click
                 }), "Second")
 
+                table.insert(AllElements, {Label = BindConfig.Name, Tab = TabConfig.Name, Activate = nil})
+
                 AddConnection(BindBox.Value:GetPropertyChangedSignal("Text"),function()
                     TweenService:Create(BindBox,TweenInfo.new(0.25,Enum.EasingStyle.Quint),{Size=UDim2.new(0,BindBox.Value.TextBounds.X+16,0,24)}):Play()
                 end)
@@ -1204,6 +1325,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     AddThemeObject(MakeElement("Stroke"),"Stroke"), TextContainer, Click
                 }), "Second")
 
+                table.insert(AllElements, {Label = TextboxConfig.Name, Tab = TabConfig.Name, Activate = nil})
+
                 AddConnection(TextboxActual:GetPropertyChangedSignal("Text"),function()
                     TweenService:Create(TextContainer,TweenInfo.new(0.45,Enum.EasingStyle.Quint),{Size=UDim2.new(0,TextboxActual.TextBounds.X+16,0,24)}):Play()
                 end)
@@ -1241,6 +1364,8 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
                     }),{Size=UDim2.new(1,0,0,38),ClipsDescendants=true,Name="F"}),
                     ColorpickerContainer, AddThemeObject(MakeElement("Stroke"),"Stroke")
                 }),"Second")
+
+                table.insert(AllElements, {Label = ColorpickerConfig.Name, Tab = TabConfig.Name, Activate = nil})
 
                 AddConnection(Click.MouseButton1Click,function()
                     Colorpicker.Toggled=not Colorpicker.Toggled
@@ -1327,6 +1452,7 @@ local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Nam
     return TabFunction
 end
 
+-- Legacy notification system (kept for compatibility)
 local Configs_HUB = {
     Cor_Hub=Color3.fromRGB(15,15,15), Cor_Options=Color3.fromRGB(15,15,15),
     Cor_Stroke=Color3.fromRGB(60,60,60), Cor_Text=Color3.fromRGB(240,240,240),
